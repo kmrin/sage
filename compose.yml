@@ -1,0 +1,41 @@
+services:
+  sage:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    container_name: sage_bot
+    # ports:
+    #   - "10000:8000"
+    volumes:
+      - ./sage:/sage/sage
+      - sage_bot_data:/var/sage
+    networks:
+      - sage_net
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+
+  database:
+    env_file: .env
+    image: postgres:16
+    container_name: sage_db
+    ports:
+      - "10001:5432"
+    volumes:
+      - sage_db_data:/var/lib/postgresql/data/
+    networks:
+      - sage_net
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  sage_bot_data:
+  sage_db_data:
+
+networks:
+  sage_net:
