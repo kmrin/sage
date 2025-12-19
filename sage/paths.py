@@ -19,7 +19,7 @@ class Paths:
     log_history = get_path("/var/sage/logs/history")
     log_tracebacks = get_path("/var/sage/logs/tracebacks")
 
-    def __post_init__(self) -> None:
+    def __init__(self) -> None:
         exceptions = [
             "log_latest"
         ]
