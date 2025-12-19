@@ -13,7 +13,7 @@ from .log import loggers, log_exception
 logger = loggers.UTILS
 
 
-def yaml_read(p: str | Path, supress_logs: bool = False) -> Optional[list | dict]:
+def yaml_read(p: str | Path, supress_logs: bool = False) -> Optional[list | dict[str, Any]]:
     path = p if isinstance(p, Path) else get_path(p)
 
     if path.is_dir():
