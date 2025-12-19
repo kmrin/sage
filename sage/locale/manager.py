@@ -2,12 +2,12 @@ from typing import Optional
 from dataclasses import fields
 from discord import Interaction, Locale
 
-from ..log import Logger, log_exception
+from ..log import loggers, log_exception
 from ..paths import paths
 from ..utils import yaml_read
 from ..models.locale import Localisation
 
-logger = Logger.LOCALE
+logger = loggers.LOCALE
 locales: dict[str, Localisation] = {}
 
 

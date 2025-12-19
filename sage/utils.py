@@ -8,13 +8,13 @@ from discord import Intents
 
 from .config import config
 from .helpers import get_path
-from .log import Logger, log_exception
+from .log import loggers, log_exception
 
-logger = Logger.UTILS
+logger = loggers.UTILS
 
 
-def yaml_read(p: str | Path, system: bool = False, supress_logs: bool = False) -> Optional[list | dict]:
-    path = p if isinstance(p, Path) else get_path(p, system)
+def yaml_read(p: str | Path, supress_logs: bool = False) -> Optional[list | dict]:
+    path = p if isinstance(p, Path) else get_path(p)
 
     if path.is_dir():
         logger.error(f"{str(path)} is a directory")
@@ -45,8 +45,8 @@ def yaml_read(p: str | Path, system: bool = False, supress_logs: bool = False) -
     return None
 
 
-def yaml_write(p: str | Path, data: Any, system: bool = False, supress_logs: bool = False, *args, **kwargs) -> bool:
-    path = p if isinstance(p, Path) else get_path(p, system)
+def yaml_write(p: str | Path, data: Any, supress_logs: bool = False, *args, **kwargs) -> bool:
+    path = p if isinstance(p, Path) else get_path(p)
 
     if path.is_dir():
         logger.error(f"{str(path)} is a directory")
@@ -62,7 +62,7 @@ def yaml_write(p: str | Path, data: Any, system: bool = False, supress_logs: boo
         with open(path, "w", encoding="utf-8") as f:
             yaml.dump(data, f, default_flow_style=False, allow_unicode=True, *args, **kwargs)
 
-        file_data = yaml_read(path, system=system, supress_logs=supress_logs)
+        file_data = yaml_read(path, supress_logs=supress_logs)
 
         if file_data != data:
             logger.error(f"Failed to write {str(path)}; data missmatch")

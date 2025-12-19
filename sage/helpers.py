@@ -7,8 +7,8 @@ from typing import Literal
 from discord.app_commands import Choice
 
 
-def get_path(path: str, system: bool = False) -> Path:
-    if system:
+def get_path(path: str) -> Path:
+    if path.startswith("/"):
         return Path(os.path.realpath(path))
     return Path(os.path.join(os.path.dirname(__file__), path))
 
@@ -46,11 +46,12 @@ def choice_to_bool(choice: Literal[0, 1] | Choice[int]) -> bool:
 
 
 def filter_dict(d: dict, keys: list[str], mode: Literal["include", "exclude"] = "exclude") -> dict:
-    return {
-        k: v for k, v in d.items() if k not in keys
-    } if mode == "exclude" else {
-        k: v for k, v in d.items() if k in keys
-    }
+    if mode == "include":
+        return {k: v for k, v in d.items() if k in keys}
+    elif mode == "exclude":
+        return {k: v for k, v in d.items() if k not in keys}
+    else:
+        raise ValueError(f"Filter mode {mode} is invalid. Allowed modes are 'include' or 'exclude'.")
 
 
 def is_valid_hex(value: str) -> bool:
