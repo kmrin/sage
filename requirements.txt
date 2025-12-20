@@ -1,6 +1,7 @@
 alembic
 asyncpg
 discord.py[voice]
+psycopg2-binary
 pydantic
 python-dotenv
 pyyaml

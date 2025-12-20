@@ -14,4 +14,6 @@ _int() {
 trap _term SIGTERM
 trap _int SIGINT
 
+alembic upgrade head
+
 exec sage

@@ -32,3 +32,9 @@ sage = "sage.client:main"
 Source = "https://github.com/kmrin/sage"
 TermsOfService = "https://github.com/kmrin/sage/blob/main/sage/assets/docs/terms_of_service.md"
 PrivacyPolicy = "https://github.com/kmrin/sage/blob/main/sage/assets/docs/privacy_policy.md"
+
+[tool.alembic]
+script_location = "%(here)s/migrations"
+prepend_sys_path = [
+    "."
+]

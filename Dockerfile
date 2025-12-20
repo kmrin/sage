@@ -15,10 +15,11 @@ RUN mkdir -p \
     /var/sage/logs/history \
     /var/sage/logs/tracebacks
 
-COPY ./LICENSE .
-COPY ./README.md .
 COPY ./pyproject.toml .
 COPY ./entrypoint.sh .
+COPY ./alembic.ini ./
+COPY ./migrations ./migrations
+COPY ./sage ./sage
 
 RUN chmod -R 777 /var/sage
 RUN chmod +x entrypoint.sh

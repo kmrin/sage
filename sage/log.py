@@ -65,6 +65,7 @@ class Loggers:
     ERRORS: LoggingLogger = getLogger("Errors")
     UTILS: LoggingLogger = getLogger("Utils")
     LOCALE: LoggingLogger = getLogger("Locale")
+    DB: LoggingLogger = getLogger("DB")
     
     def __init__(self) -> None:
         l_objs = list(
