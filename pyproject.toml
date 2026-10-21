@@ -1,0 +1,97 @@
+[project]
+name = "sage"
+version = "0.1.0"
+description = "Sage, a general-purpose Discord bot built on hikari, crescent, miru and ongaku."
+readme = "README.md"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    "alembic>=1.20.0",
+    "asyncpg>=0.32.0",
+    "hikari-crescent[cron]>=1.4.0",
+    # NOTE: miru 4.3.1+ requires hikari 2.6, whick ongaku does not support yet
+    "hikari-miru>=4.2,<4.3.1",
+    # NOTE: ongaku 1.0.4 pins hikari ~=2.5.0; keep hikari in lockstep until ongaku moves
+    "hikari-ongaku~=1.0.4",
+    "hikari[speedups]~=2.5.0",
+    "pydantic>=2.14.1",
+    "pydantic-settings>=2.16.1",
+    "python-dotenv>=1.2.4",
+    "rich>=15.0.0",
+    "sqlalchemy[asyncio]>=2.1.5",
+]
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.40.2",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.17.1",
+]
+
+[tool.uv]
+no-build = true
+package = false
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+src = ["src"]
+extend-exclude = ["tests/*", "src/migrations/versions/*"]
+
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    # "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort
+    "N",     # pep8-naming
+    "UP",    # pyupgrade
+    "B",     # bugbear
+    "A",     # builtins shadowing
+    "C4",    # comprehensions
+    "SIM",   # simplify
+    "RET",   # return statements
+    "PTH",   # pathlib over os.path
+    "ASYNC", # async pitfalls
+    "TC",    # type-checking imports
+    "RUF",   # ruff-specific
+    "PL",    # pylint
+]
+
+ignore = [
+    "PLR0913", # crescent/hikari callbacks naturally take many arguments
+    "PLR2004", # magic values in comparisons
+]
+
+[tool.ruff.lint.flake8-type-checking]
+runtime-evaluated-base-classes = [
+    "pydantic.BaseModel",
+    "pydantic_settings.BaseSettings",
+    "sqlalchemy.orm.DeclarativeBase",
+    "models.db.Base",
+    "models.snapshots._Snapshot",
+    "models.settings._Base",
+]
+
+# crescent resolves the event type from the listener's annotation at import time
+runtime-evaluated-decorators = ["crescent.event", "crescent.catch_event", "crescent.catch_command"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["commands", "core", "events", "models", "scripts"]
+
+[tool.ruff.format]
+line-ending = "lf"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-ra --strict-markers"
+markers = ["database: needs a reachable PostgreSQL (SAGE_TEST_DATABASE_URL"]
+
+[tool.basedpyright]
+typeCheckingMode = "standard"
+pythonVersion = "3.14"
+extraPaths = ["src"]
+exclude = ["src/migrations/versions", ".venv"]

@@ -1,0 +1,15 @@
+# Dev overlay: publishes the db and lavalink on localhost so sage can run with `uv run`
+#   docker compose -f compose.yaml -f compose.dev.yaml up -d sage-db sage-lavalink
+#   POSTGRES_HOST=127.0.0.1 ; LAVALINK_HOST=127.0.0.1 on .env
+services:
+  sage-db:
+    ports:
+      - "127.0.0.1:5432:5432"
+  
+  sage-lavalink:
+    ports:
+      - "127.0.0.1:2333:2333"
+
+networks:
+  sage-backend:
+    internal: false

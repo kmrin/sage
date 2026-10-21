@@ -1,0 +1,12 @@
+**
+
+!pyproject.toml
+!uv.lock
+!alembic.ini
+!src/
+!src/**
+
+**/__pycache__
+**/*.py[cod]
+**/.ruff_cache
+**/.pytest_cache

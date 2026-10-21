@@ -1,0 +1,14 @@
+[errors]
+unexpected = "Something went wrong while running this command."
+
+[errors.permissions]
+owner_only = "Only the owner of this Sage instance can use this command."
+guild_only = "This command can only be used inside a server."
+guild_admin = "You need admin permissions in this server to use this command."
+guild_restricted = "This command isn't available in this server."
+
+[commands.core.ping]
+name = "ping"
+description = "Check that Sage is online and how fast it responds."
+response = "Pong! Latency: **{latency} ms**"
+response_pending = "Pong! Latency is stil being measured, try again in a few seconds."

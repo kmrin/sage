@@ -1,0 +1,29 @@
+* text=auto eol=lf
+
+*.sh        text eol=lf
+*.py        text eol=lf
+*.toml      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.ini       text eol=lf
+*.mako      text eol=lf
+*.md        text eol=lf
+.env*       text eol=lf
+Dockerfile  text eol=lf
+
+uv.lock     text eol=lf -diff merge=binary linguist-generated
+
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.ttf   binary
+*.otf   binary
+*.woff  binary
+*.woff2 binary
+*.mp3   binary
+*.ogg   binary
+*.wav   binary
+*.zip   binary

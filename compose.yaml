@@ -1,0 +1,161 @@
+name: sage
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-hardening: &hardening
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging: *default-logging
+
+services:
+  sage-bot:
+    <<: *hardening
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sage:${SAGE_VERSION:-latest}
+    container_name: sage-bot
+    hostname: sage-bot
+    init: true
+    env_file:
+      - path: .env
+        required: true
+    environment:
+      SAGE_HOME: /var/lib/sage
+      TZ: ${TZ:-UTC}
+      FORCE_COLOR: "1"
+      POSTGRES_HOST: sage-db
+      POSTGRES_PORT: "5432"
+      LAVALINK_HOST: sage-lavalink
+      LAVALINK_PORT: "2333"
+    depends_on:
+      sage-db:
+        condition: service_healthy
+        restart: true
+      sage-lavalink:
+        condition: service_healthy
+    volumes:
+      - sage-data:/var/lib/sage
+    networks:
+      - sage-backend
+      - sage-egress
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    stop_signal: SIGTERM
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD", "python", "-m", "scripts.healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+  
+  sage-db:
+    <<: *hardening
+    image: postgres:18-alpine
+    container_name: sage-db
+    hostname: sage-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sage}
+      POSTGRES_USER: ${POSTGRES_USER:-sage}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
+      POSTGRES_INITDB_ARGS: --encoding=UTF8 --locale-provider=builtin --builtin-locale=C.UTF-8
+    volumes:
+      - sage-db-data:/var/lib/postgresql
+    networks:
+      - sage-backend
+    shm_size: 128m
+    stop_grace_period: 60s
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\" -h 127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+  
+  # Gives the lavalink user permissions to access the plugins folder
+  # needs to run otherwise lavalink will crash
+  sage-lavalink-init:
+    image: ghcr.io/lavalink-devs/lavalink:4-alpine
+    container_name: sage-lavalink-init
+    user: "0:0"
+    entrypoint: ["chown", "-R", "lavalink:lavalink", "/opt/Lavalink/plugins"]
+    volumes:
+      - sage-lavalink-plugins:/opt/Lavalink/plugins
+    network_mode: none
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+    logging: *default-logging
+
+  sage-lavalink:
+    <<: *hardening
+    image: ghcr.io/lavalink-devs/lavalink:4-alpine
+    container_name: sage-lavalink
+    hostname: sage-lavalink
+    depends_on:
+      sage-lavalink-init:
+        condition: service_completed_successfully
+    environment:
+      SERVER_PORT: "2333"
+      LAVALINK_SERVER_PASSWORD: ${LAVALINK_PASSWORD:?LAVALINK_PASSWORD must be set in .env}
+      _JAVA_OPTIONS: -Xmx${LAVALINK_MAX_HEAP:-512M}
+    volumes:
+      - ./docker/lavalink/application.yml:/opt/Lavalink/application.yml:ro
+      - sage-lavalink-plugins:/opt/Lavalink/plugins
+    networks:
+      - sage-backend
+      - sage-egress
+    expose:
+      - "2333"
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "wget -q -O /dev/null --header \"Authorization: $${LAVALINK_SERVER_PASSWORD}\" http://127.0.0.1:2333/version"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+networks:
+  # Bot <-> DB <-> Lavalink
+  sage-backend:
+    name: sage-backend
+    internal: true
+  # Outbound
+  sage-egress:
+    name: sage-egress
+
+volumes:
+  sage-data:
+    name: sage-data
+  sage-db-data:
+    name: sage-db-data
+  sage-lavalink-plugins:
+    name: sage-lavalink-plugins
