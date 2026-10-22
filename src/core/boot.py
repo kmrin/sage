@@ -58,9 +58,9 @@ async def verify_discord(settings: DiscordSettings) -> BootReport:
 
             application = await rest.fetch_application()
             _check_application(application, settings)
-            
+
             emojis = Emojis()
-            
+
             try:
                 await emojis.load(rest, application.id)
             except MissingEmojisError as error:
