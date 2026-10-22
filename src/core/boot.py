@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 import hikari
 
+from core.emojis import Emojis, MissingEmojisError
 from core.logger import get_logger
 from models.snapshots import OwnerSnapshot
 
@@ -25,6 +26,7 @@ class BootReport:
     bot_id: int
     bot_name: str
     owner: OwnerSnapshot
+    emojis: Emojis
 
 
 async def verify_discord(settings: DiscordSettings) -> BootReport:
@@ -56,6 +58,13 @@ async def verify_discord(settings: DiscordSettings) -> BootReport:
 
             application = await rest.fetch_application()
             _check_application(application, settings)
+            
+            emojis = Emojis()
+            
+            try:
+                await emojis.load(rest, application.id)
+            except MissingEmojisError as error:
+                raise BootError(str(error)) from None
 
     except hikari.HTTPError as error:
         raise BootError(f"Discord API check failed: {error}") from error
@@ -63,7 +72,9 @@ async def verify_discord(settings: DiscordSettings) -> BootReport:
     finally:
         await rest_app.close()
 
-    return BootReport(bot_id=me.id, bot_name=me.username, owner=OwnerSnapshot.from_user(owner))
+    return BootReport(
+        bot_id=me.id, bot_name=me.username, owner=OwnerSnapshot.from_user(owner), emojis=emojis
+    )
 
 
 def _check_application(application: hikari.Application, settings: DiscordSettings) -> None:

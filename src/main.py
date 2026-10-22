@@ -13,7 +13,7 @@ import miru
 import ongaku
 
 from core import i18n
-from core.boot import BootError, verify_discord
+from core.boot import BootError, BootReport, verify_discord
 from core.database import Database, DatabaseUnavailableError
 from core.env import load_env
 from core.loader import load_plugins
@@ -114,12 +114,12 @@ async def run(settings: Settings) -> int:
         return EXIT_FAILURE
 
     try:
-        return await _run_bot(settings, database, report.owner.owner_id)
+        return await _run_bot(settings, database, report)
     finally:
         await database.close()
 
 
-async def _run_bot(settings: Settings, database: Database, owner_id: int) -> int:
+async def _run_bot(settings: Settings, database: Database, report: BootReport) -> int:
     bot = hikari.GatewayBot(
         settings.discord.token.get_secret_value(),
         intents=settings.discord.intents,
@@ -143,10 +143,11 @@ async def _run_bot(settings: Settings, database: Database, owner_id: int) -> int
         "Lavalink session configured for %s:%d", settings.lavalink.host, settings.lavalink.port
     )
 
-    sync = GuildSync(database, owner_id=owner_id)
+    sync = GuildSync(database, owner_id=report.owner.owner_id)
     model = SageModel(
         settings=settings,
         database=database,
+        emojis=report.emojis,
         sync=sync,
         miru=miru_client,
         ongaku=ongaku_client,

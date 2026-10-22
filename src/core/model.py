@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     import ongaku
 
     from core.database import Database
+    from core.emojis import Emojis
     from core.sync import GuildSync
     from models.settings import Settings
 
@@ -22,6 +23,7 @@ __all__ = ("SageModel", "SagePlugin", "model_of")
 class SageModel:
     settings: Settings
     database: Database
+    emojis: Emojis
     sync: GuildSync
     miru: miru.Client
     ongaku: ongaku.Client
