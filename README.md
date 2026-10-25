@@ -50,9 +50,14 @@ src/
 ├── assets/                 # Static files shipped with the bot (read-only at runtime)
 │   └── docs/               # Terms of Service and Privacy Policy
 ├── commands/               # Slash commands, one package per category (see "How to build plugins")
-│   └── core/
-│       ├── commands.py     # Core commands such as /ping
-│       └── models.py       # Category-local models used my core.commands
+│   ├── core/
+│   │   ├── commands.py     # Core commands such as /ping
+│   │   └── models.py       # Category-local models used my core.commands
+│   └── guild/
+│       ├── commands.py     # Admin-only server settings: /set_welcome_channel, /set_auto_role
+│       ├── events.py       # Member-join listener that gives the auto role and sends the welcome embed
+│       ├── models.py       # Welcome message placeholders and color parsing
+│       └── welcome.py      # Welcome embed builder shared by commands.py (preview) and events.py
 ├── core/                   # Framework code shared by every plugin
 │   ├── boot.py             # Pre-flight Discord checks: token, owner, privileged intents
 │   ├── database.py         # Async SQLAlchemy engine + session factory
@@ -86,7 +91,8 @@ Runtime data (logs, the heartbeat, temporary files) is written to the data direc
 ## How to build plugins
 Sage is built on [crescent](https://github.com/hikari-crescent/hikari-crescent) plugins. You never register a plugin by hand: at startup [`core/loader.py`](./src/core/loader.py) loads
 
-- `commands/<category>/commands.py` for every package in `src/commands/`, and
+- `commands/<category>/commands.py` for every package in `src/commands/`,
+- `commands/<category>/events.py` for every category that has one, right after its `commands.py`, and
 - `events/<name>.py` for every module in `src/events/`,
 
 in alphabetical order. Anything whose name starts with `_` is skipped. Each of these modules must expose a module-level `plugin = SagePlugin()`, and everything you want registered is added with `@plugin.include`.
@@ -100,15 +106,16 @@ Inside a plugin you have:
 | A logger | `log = get_logger("MyFeature")` from `core.logger` |
 
 ### Commands and categories
-A **category** is a package in `src/commands/`. The folder name is the category name, and it's used to namespace the command's locale keys (`commands.<category>.<command>.*`). A category needs two files:
+A **category** is a package in `src/commands/`. The folder name is the category name, and it's used to namespace the command's locale keys (`commands.<category>.<command>.*`). A category needs two files, plus an optional third:
 
 ```
 src/commands/utility/
 ├── __init__.py   # empty
-└── commands.py   # the plugin, loaded automatically
+├── commands.py   # the slash commands plugin, loaded automatically
+└── events.py     # optional: listeners and tasks for this category, also loaded automatically
 ```
 
-If `commands.py` is missing, the loader logs a warning and skips the category. Every other file in the folder (models, helpers, miru views...) is just a normal module you import from `commands.py`, the loader never touches it.
+If `commands.py` is missing, the loader logs a warning and skips the category, `events.py` included. `commands.py` and `events.py` are separate plugins, each with its own `plugin = SagePlugin()`. Every other file in the folder (models, helpers, miru views...) is just a normal module you import from them, the loader never touches it. When both plugins need the same code, put it in one of those modules (like [`commands/guild/welcome.py`](./src/commands/guild/welcome.py)) instead of importing one plugin from the other.
 
 An example command, under the "utility" category, with an option and a permission guard:
 
@@ -264,10 +271,15 @@ Using strings in code:
 The default locale is set with `SAGE_DEFAULT_LOCALE` (falls back to `en-US`). Keep command strings under `commands.<category>.<command>`, error messages under `errors`, and give other features their own top-level table (for example `[events.welcome]`).
 
 ### Event handlers
-Create a new module in `src/events/`. It's loaded automatically:
+Listeners go in one of two places, both loaded automatically:
+
+- **`commands/<category>/events.py`** for listeners that belong to one command category, like the member-join listener in [`commands/guild/events.py`](./src/commands/guild/events.py) that acts on the settings `/set_welcome_channel` and `/set_auto_role` save.
+- **`events/<name>.py`** for everything not tied to a single category (syncing, lifecycle, error handling...).
+
+Both look the same:
 
 ```python
-# src/events/welcome.py
+# src/commands/utility/events.py
 from __future__ import annotations
 
 import crescent
@@ -278,7 +290,7 @@ from core.logger import get_logger
 from core.model import SagePlugin
 
 plugin = SagePlugin()
-log = get_logger("Welcome")
+log = get_logger("Utility")
 
 
 @plugin.include
@@ -296,10 +308,9 @@ async def on_member_join(event: hikari.MemberCreateEvent) -> None:
 - crescent picks the event from the type annotation, so import the event type normally, not under `TYPE_CHECKING` (ruff is already set up for this).
 - Only the events allowed by the bot's intents arrive: everything unprivileged, plus server members, plus message content unless `DISCORD_MESSAGE_CONTENT_INTENT=false`.
 - Exceptions raised in listeners are logged by `events/errors.py`.
-- A listener that only exists for one command category can also go in that category's `commands.py`, since both are plugins. Use `events/` for anything not tied to a single category.
 
 ### Timed events
-Repeating jobs use `crescent.ext.tasks` and are included like any other listener, in an `events/` module or a category's `commands.py`:
+Repeating jobs use `crescent.ext.tasks` and are included like any other listener, in an `events/` module or a category's `events.py`:
 
 ```python
 from datetime import timedelta
@@ -331,7 +342,7 @@ async def nightly_cleanup() -> None:
 - Errors raised in tasks are **not** caught by `events/errors.py`. Wrap the body in `try`/`except` and log failures, or the error is reported as an unhandled asyncio task exception.
 - To change a loop's interval at runtime, use `refresh_status.metadata.set_interval(minutes=5)`.
 
-After loading, the log shows what each plugin registered, e.g. `Loaded commands.utility.commands (1 commands, 0 event listeners, 0 tasks)`. It's a quick way to check your new code was picked up.
+After loading, the log shows what each plugin registered, e.g. `Loaded commands.utility.commands (1 commands, 0 event listeners, 0 tasks)` and `Loaded commands.utility.events (0 commands, 1 event listeners, 0 tasks)`. It's a quick way to check your new code was picked up.
 
 ## License
 This project is licensed under the **GNU Affero General Public License v3.0 (AGPLv3)**.

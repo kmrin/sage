@@ -10,25 +10,45 @@ from core.paths import paths
 if TYPE_CHECKING:
     import crescent
 
-__all__ = ("command_modules", "event_modules", "load_plugins")
+__all__ = (
+    "category_event_modules",
+    "command_modules",
+    "event_modules",
+    "load_plugins",
+    "plugin_modules",
+)
 
 log = get_logger("Loader")
 
 COMMAND_MODULE = "commands"
+CATEGORY_EVENT_MODULE = "events"
 
 
-def command_modules() -> list[str]:
-    """`commands.<cat>.commands` for every category package"""
+def _categories() -> list[str]:
     found: list[str] = []
     for info in sorted(pkgutil.iter_modules([str(paths.package / "commands")]), key=_name):
         if not info.ispkg or info.name.startswith("_"):
             continue
-        module = f"commands.{info.name}.{COMMAND_MODULE}"
-        if importlib.util.find_spec(module) is None:
+        if importlib.util.find_spec(f"commands.{info.name}.{COMMAND_MODULE}") is None:
             log.warn("Command category %r has no %s.py, skipping", info.name, COMMAND_MODULE)
             continue
-        found.append(module)
+        found.append(info.name)
     return found
+
+
+def command_modules() -> list[str]:
+    """`commands.<cat>.commands` for every category package"""
+    return [f"commands.{category}.{COMMAND_MODULE}" for category in _categories()]
+
+
+def category_event_modules() -> list[str]:
+    """`commands.<cat>.events` for every category that has one"""
+    return [module for category in _categories() if (module := _category_events(category))]
+
+
+def _category_events(category: str) -> str | None:
+    module = f"commands.{category}.{CATEGORY_EVENT_MODULE}"
+    return module if importlib.util.find_spec(module) is not None else None
 
 
 def event_modules() -> list[str]:
@@ -39,8 +59,17 @@ def event_modules() -> list[str]:
     ]
 
 
+def plugin_modules() -> list[str]:
+    modules: list[str] = []
+    for category in _categories():
+        modules.append(f"commands.{category}.{COMMAND_MODULE}")
+        if events := _category_events(category):
+            modules.append(events)
+    return [*modules, *event_modules()]
+
+
 def load_plugins(client: crescent.Client) -> int:
-    modules = [*command_modules(), *event_modules()]
+    modules = plugin_modules()
     for module in modules:
         plugin = client.plugins.load(module)
         log.info(

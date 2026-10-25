@@ -9,7 +9,7 @@ from crescent.locale import str_or_build_locale
 
 from conftest import OWNER_ID, make_ctx
 from core.i18n import t
-from core.loader import command_modules, event_modules, load_plugins
+from core.loader import category_event_modules, command_modules, event_modules, load_plugins, plugin_modules
 
 
 @pytest.fixture
@@ -23,8 +23,16 @@ def test_discovers_command_categories_and_events() -> None:
     assert {"events.errors", "events.guilds", "events.lifecycle"} <= set(event_modules())
 
 
+def test_category_events_are_optional_and_load_after_their_commands() -> None:
+    assert "commands.guild.events" in category_event_modules()
+    assert "commands.core.events" not in category_event_modules()  # core has no events.py
+    modules = plugin_modules()
+    assert modules.index("commands.guild.commands") < modules.index("commands.guild.events") < modules.index("events.errors")
+    assert set(modules) == {*command_modules(), *category_event_modules(), *event_modules()}
+
+
 def test_all_plugins_load(client: crescent.Client) -> None:
-    assert load_plugins(client) == len(command_modules()) + len(event_modules())
+    assert load_plugins(client) == len(plugin_modules())
 
 
 def _ping() -> Any:
@@ -83,13 +91,13 @@ def test_about_is_registered_with_translations(client: crescent.Client) -> None:
     assert name_localizations == {"pt-BR": "sobre"}
 
 
-async def test_about_responds_with_ephemeral_embed(client: crescent.Client) -> None:
+async def test_about_responds_with_embed(client: crescent.Client) -> None:
     client.plugins.load("commands.core.commands")
     ctx = _about_ctx(locale="pt-BR")
     await _about().About.metadata.callback(ctx)
 
     ctx.respond.assert_awaited_once()
-    assert ctx.respond.await_args.kwargs["ephemeral"] is True
+    assert not ctx.respond.await_args.kwargs.get("ephemeral")
     embed: hikari.Embed = ctx.respond.await_args.kwargs["embed"]
     assert embed.color == _about().ABOUT_COLOR
     assert embed.title == t("commands.core.about.title", "pt-BR", name="Sage")  # unstarted bot
