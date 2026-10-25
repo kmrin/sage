@@ -12,7 +12,7 @@ from models.db import GuildAutoRoleConfig, GuildWelcomeChannelConfig
 plugin = SagePlugin()
 log = get_logger("Guild")
 
-auto_role_keys = LocaleKeys("commands.guild.set_auto_role")
+auto_role_keys = LocaleKeys("commands.guild.set.auto_role")
 
 
 @plugin.include

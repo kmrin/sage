@@ -1,5 +1,5 @@
 """
-Welcome embed building, shared by /set_welcome_channel's preview and the member-join listener.
+Welcome embed building, shared by /set welcome_channel's preview and the member-join listener.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 __all__ = ("MESSAGE_LIMIT", "TITLE_LIMIT", "welcome_embed", "welcome_keys", "welcome_values")
 
-welcome_keys = LocaleKeys("commands.guild.set_welcome_channel")
+welcome_keys = LocaleKeys("commands.guild.set.welcome_channel")
 
 TITLE_LIMIT: Final = 256
 MESSAGE_LIMIT: Final = 4096

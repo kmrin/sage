@@ -54,7 +54,7 @@ src/
 │   │   ├── commands.py     # Core commands such as /ping
 │   │   └── models.py       # Category-local models used my core.commands
 │   └── guild/
-│       ├── commands.py     # Admin-only server settings: /set_welcome_channel, /set_auto_role
+│       ├── commands.py     # Admin-only server settings: /set welcome_channel, /set auto_role
 │       ├── events.py       # Member-join listener that gives the auto role and sends the welcome embed
 │       ├── models.py       # Welcome message placeholders and color parsing
 │       └── welcome.py      # Welcome embed builder shared by commands.py (preview) and events.py
@@ -166,6 +166,30 @@ Decorator order matters: `@plugin.include` on top, permission guards in the midd
 
 Uncaught exceptions in a command are logged by [`events/errors.py`](./src/events/errors.py) and the user gets a generic "something went wrong" reply, so you only need to handle the errors you expect.
 
+#### Command groups
+Related commands can share a root command as subcommands, like `/set welcome_channel` and `/set auto_role` in [`commands/guild/commands.py`](./src/commands/guild/commands.py). Create a `crescent.Group` with localized strings and add `@group.child` right under `@plugin.include`:
+
+```python
+set_keys = LocaleKeys("commands.guild.set")
+set_group = crescent.Group(set_keys.localized("name"), set_keys.localized("description"))
+auto_role_keys = set_keys.child("auto_role")
+
+
+@plugin.include
+@set_group.child
+@guild_admin
+@crescent.command(
+    name=auto_role_keys.localized("name"),
+    description=auto_role_keys.localized("description"),
+)
+class SetAutoRole: ...
+```
+
+- Locale keys nest the same way: the group's `name`/`description` under `commands.<category>.<group>`, and each subcommand under `commands.<category>.<group>.<subcommand>`.
+- Guards still go on each subcommand. A guard on one subcommand doesn't cover its siblings.
+- Discord doesn't allow `default_member_permissions` on subcommands, only on the `crescent.Group`.
+- `group.sub_group("name", ...)` adds one more level (`/set server welcome_channel`), which Discord caps at that depth.
+
 During development, set `SAGE_DEV_GUILD_ID` so commands register to a single server instantly instead of waiting on Discord's global command propagation.
 
 ### Models and extra files
@@ -273,7 +297,7 @@ The default locale is set with `SAGE_DEFAULT_LOCALE` (falls back to `en-US`). Ke
 ### Event handlers
 Listeners go in one of two places, both loaded automatically:
 
-- **`commands/<category>/events.py`** for listeners that belong to one command category, like the member-join listener in [`commands/guild/events.py`](./src/commands/guild/events.py) that acts on the settings `/set_welcome_channel` and `/set_auto_role` save.
+- **`commands/<category>/events.py`** for listeners that belong to one command category, like the member-join listener in [`commands/guild/events.py`](./src/commands/guild/events.py) that acts on the settings `/set welcome_channel` and `/set auto_role` save.
 - **`events/<name>.py`** for everything not tied to a single category (syncing, lifecycle, error handling...).
 
 Both look the same:

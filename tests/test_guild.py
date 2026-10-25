@@ -139,12 +139,14 @@ def test_render_leaves_everything_else_alone() -> None:
 
 @pytest.mark.parametrize(
     ("attribute", "en", "pt"),
-    [("SetWelcomeChannel", "set_welcome_channel", "definir_canal_boas_vindas"), ("SetAutoRole", "set_auto_role", "definir_cargo_automatico")],
+    [("SetWelcomeChannel", "welcome_channel", "canal_boas_vindas"), ("SetAutoRole", "auto_role", "cargo_automatico")],
 )
 def test_commands_are_translated_and_admin_only(client: crescent.Client, attribute: str, en: str, pt: str) -> None:
     meta = getattr(_commands(), attribute).metadata
     name, localizations = str_or_build_locale(meta.app_command.name)
     assert (name, localizations) == (en, {"pt-BR": pt})
+    assert meta.sub_group is None
+    assert str_or_build_locale(meta.group.name) == ("set", {"pt-BR": "definir"})
     assert len(meta.hooks) == 1  # guild_admin
 
 
@@ -154,8 +156,8 @@ def test_commands_are_translated_and_admin_only(client: crescent.Client, attribu
 def test_welcome_embed_defaults_follow_the_guild_locale(client: crescent.Client) -> None:
     config = GuildWelcomeChannelConfig(show_pfp_option=True)
     embed = welcome_embed(config, member(), VALUES, "pt-BR")
-    assert embed.title == t("commands.guild.set_welcome_channel.default_title", "pt-BR", **VALUES.as_mapping())
-    assert embed.description == t("commands.guild.set_welcome_channel.default_message", "pt-BR", **VALUES.as_mapping())
+    assert embed.title == t("commands.guild.set.welcome_channel.default_title", "pt-BR", **VALUES.as_mapping())
+    assert embed.description == t("commands.guild.set.welcome_channel.default_message", "pt-BR", **VALUES.as_mapping())
     assert embed.color == WELCOME_COLOR
     assert embed.thumbnail is not None
 
@@ -174,8 +176,8 @@ def test_welcome_embed_uses_custom_text(client: crescent.Client) -> None:
 
 def test_role_problem_basics(client: crescent.Client) -> None:
     check = _commands().SetAutoRole.metadata.owner.role_problem
-    assert check(role(GUILD_ID), GUILD_ID) == "commands.guild.set_auto_role.problems.everyone"
-    assert check(role(is_managed=True), GUILD_ID) == "commands.guild.set_auto_role.problems.managed"
+    assert check(role(GUILD_ID), GUILD_ID) == "commands.guild.set.auto_role.problems.everyone"
+    assert check(role(is_managed=True), GUILD_ID) == "commands.guild.set.auto_role.problems.managed"
     assert check(role(), GUILD_ID) is None  # Sage isn't cached: leave it to Discord
 
 
@@ -197,14 +199,14 @@ def test_role_problem_checks_sage_can_assign(
     monkeypatch.setattr(type(client.app.cache), "get_member", lambda *_: sage)
     monkeypatch.setattr(type(client.app.cache), "get_role", lambda *_: None)
     result = _commands().SetAutoRole.metadata.owner.role_problem(role(position=1), GUILD_ID)
-    assert result == (problem and f"commands.guild.set_auto_role.problems.{problem}")
+    assert result == (problem and f"commands.guild.set.auto_role.problems.{problem}")
 
 
 async def test_bad_color_is_rejected_before_touching_the_db(client: crescent.Client) -> None:
     ctx = admin_ctx(database=None)
     await _commands().SetWelcomeChannel.metadata.callback(ctx, color="purple")
     content, kwargs = responded(ctx)
-    assert content == t("commands.guild.set_welcome_channel.invalid_color", "en-US", color="purple")
+    assert content == t("commands.guild.set.welcome_channel.invalid_color", "en-US", color="purple")
     assert kwargs == {"ephemeral": True}
 
 
@@ -225,7 +227,7 @@ async def test_commands_wait_for_the_sync(client: crescent.Client, database: Sim
 async def test_welcome_needs_a_channel(client: crescent.Client, synced: SimpleNamespace) -> None:
     ctx = admin_ctx(synced)
     await _commands().SetWelcomeChannel.metadata.callback(ctx, title="ignored")
-    assert responded(ctx) == (t("commands.guild.set_welcome_channel.no_channel", "en-US"), {"ephemeral": True})
+    assert responded(ctx) == (t("commands.guild.set.welcome_channel.no_channel", "en-US"), {"ephemeral": True})
     row = await welcome_row(synced)
     assert (row.active, row.embed_title) == (False, None)
 
@@ -239,7 +241,7 @@ async def test_welcome_saves_and_previews(client: crescent.Client, synced: Simpl
     )
 
     content, kwargs = responded(ctx)
-    assert content.startswith(t("commands.guild.set_welcome_channel.saved", "pt-BR", channel="<#555>"))
+    assert content.startswith(t("commands.guild.set.welcome_channel.saved", "pt-BR", channel="<#555>"))
     assert kwargs["ephemeral"] is True
     preview: hikari.Embed = kwargs["embed"]
     assert (preview.title, preview.description, preview.color, preview.thumbnail) == ("Hi Alice", "Line\nTwo <@200>", hikari.Color(0x112233), None)
@@ -258,7 +260,7 @@ async def test_welcome_disable_and_reset(client: crescent.Client, synced: Simple
 
     ctx = admin_ctx(synced)
     await command(ctx, enabled=False)
-    assert responded(ctx) == (t("commands.guild.set_welcome_channel.disabled", "en-US"), {"ephemeral": True})
+    assert responded(ctx) == (t("commands.guild.set.welcome_channel.disabled", "en-US"), {"ephemeral": True})
     row = await welcome_row(synced)
     assert (row.active, row.channel_id, row.embed_title) == (False, 555, "Custom")
 
@@ -275,23 +277,23 @@ async def test_auto_role_saves_and_disables(client: crescent.Client, synced: Sim
 
     ctx = admin_ctx(synced)
     await command(ctx)
-    assert responded(ctx) == (t("commands.guild.set_auto_role.no_role", "en-US"), {"ephemeral": True})
+    assert responded(ctx) == (t("commands.guild.set.auto_role.no_role", "en-US"), {"ephemeral": True})
 
     ctx = admin_ctx(synced)
     await command(ctx, role=role())
-    assert responded(ctx) == (t("commands.guild.set_auto_role.saved", "en-US", role="<@&777>"), {"ephemeral": True})
+    assert responded(ctx) == (t("commands.guild.set.auto_role.saved", "en-US", role="<@&777>"), {"ephemeral": True})
     row = await auto_role_row(synced)
     assert (row.active, row.role_id, row.role_name) == (True, 777, "Members")
 
     ctx = admin_ctx(synced)
     await command(ctx, enabled=False)
-    assert responded(ctx) == (t("commands.guild.set_auto_role.disabled", "en-US"), {"ephemeral": True})
+    assert responded(ctx) == (t("commands.guild.set.auto_role.disabled", "en-US"), {"ephemeral": True})
     row = await auto_role_row(synced)
     assert (row.active, row.role_id) == (False, 777)
 
     ctx = admin_ctx(synced)
     await command(ctx)  # the saved role was deleted (it isn't in the cache)
-    assert responded(ctx)[0] == t("commands.guild.set_auto_role.problems.gone", "en-US")
+    assert responded(ctx)[0] == t("commands.guild.set.auto_role.problems.gone", "en-US")
 
 
 @pytest.mark.database
@@ -299,7 +301,7 @@ async def test_auto_role_saves_and_disables(client: crescent.Client, synced: Sim
 async def test_auto_role_refuses_unassignable_roles(client: crescent.Client, synced: SimpleNamespace) -> None:
     ctx = admin_ctx(synced)
     await _commands().SetAutoRole.metadata.callback(ctx, role=role(is_managed=True))
-    assert responded(ctx)[0] == t("commands.guild.set_auto_role.problems.managed", "en-US", role="<@&777>")
+    assert responded(ctx)[0] == t("commands.guild.set.auto_role.problems.managed", "en-US", role="<@&777>")
     assert (await auto_role_row(synced)).active is False
 
 

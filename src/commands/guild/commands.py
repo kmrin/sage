@@ -30,7 +30,10 @@ NOT_SYNCED: Final = "errors.guild.not_synced"
 
 welcome_options = welcome_keys.child("options")
 
-auto_role_keys = LocaleKeys("commands.guild.set_auto_role")
+set_keys = LocaleKeys("commands.guild.set")
+set_group = crescent.Group(set_keys.localized("name"), set_keys.localized("description"))
+
+auto_role_keys = set_keys.child("auto_role")
 auto_role_options = auto_role_keys.child("options")
 auto_role_problems = auto_role_keys.child("problems")
 
@@ -53,6 +56,7 @@ def _text_option(
 
 
 @plugin.include
+@set_group.child
 @guild_admin
 @crescent.command(
     name=welcome_keys.localized("name"),
@@ -148,6 +152,7 @@ class SetWelcomeChannel:
 
 
 @plugin.include
+@set_group.child
 @guild_admin
 @crescent.command(
     name=auto_role_keys.localized("name"),
