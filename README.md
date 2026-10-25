@@ -22,6 +22,9 @@ uv run alembic upgrade head
 uv run ruff check
 uv run basedpyright src
 uv run pytest
+
+# 6. Run Sage
+uv run python src/main.py
 ```
 
 For a more straightforward run, as in, the version you wish to run is final, simply use docker.
@@ -305,7 +308,9 @@ from crescent.ext import tasks
 
 
 @plugin.include
-@tasks.loop(minutes=10)  # also accepts hours=, seconds=, or a timedelta: tasks.loop(timedelta(hours=1))
+@tasks.loop(
+    minutes=10
+)  # also accepts hours=, seconds=, or a timedelta: tasks.loop(timedelta(hours=1))
 async def refresh_status() -> None:
     if not plugin.app.is_alive:
         return

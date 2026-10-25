@@ -10,5 +10,27 @@ guild_restricted = "Este comando não está disponível neste servidor."
 [commands.core.ping]
 name = "ping"
 description = "Verifica se a Sage está online e quão rápido ela responde."
-response = "Pong! Latência: **{latency} ms**"
+response = "🏓 Pong! Latência: **{latency} ms**"
 response_pending = "Pong! A latência ainda está sendo medida, tente de novo em alguns segundos."
+
+[commands.core.about]
+name = "sobre"
+description = "Saiba mais sobre a Sage"
+title = "🌿 {name}"
+summary = "Sage, uma bot multiuso criada com hikari, crescent, miru e ongaku."
+footer = "📜 Código aberto sob a AGPLv3 | Feita com 💜 no Brasil"
+
+[commands.core.about.fields]
+version = "🏷️ Versão"
+developer = "🧑‍💻 Desenvolvedor"
+host = "🏠 Hospedada por"
+servers = "🌐 Servidores"
+latency = "📡 Latência"
+uptime = "⏱️ Online desde"
+stack = "🛠️ Feita com"
+links = "🔗 Links"
+
+[commands.core.about.values]
+latency = "{latency} ms"
+latency_pending = "Medindo..."
+links = "[Código-fonte]({source}) | [Termos de Serviço]({terms}) | [Política de Privacidade]({privacy})"
