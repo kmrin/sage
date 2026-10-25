@@ -10,6 +10,9 @@ guild_restricted = "This command isn't available in this server."
 [errors.guild]
 not_synced = "⏳ Sage is still getting to know this server. Try again in a few seconds."
 
+[errors.paginator]
+not_yours = "These buttons belong to whoever ran the command."
+
 [commands.core.ping]
 name = "ping"
 description = "Check that Sage is online and how fast it responds."
@@ -103,3 +106,106 @@ description = "The role to give new members."
 [commands.guild.set.auto_role.options.enabled]
 name = "enabled"
 description = "Turn auto role on or off."
+
+[commands.fun]
+no_text = "There's no text in there for me to use."
+
+[commands.fun.dog]
+name = "dog"
+description = "Get a random dog picture."
+title = "🐶 Woof!"
+breed = "Breed: {breed}"
+error = "🐾 I couldn't fetch a dog right now. Try again in a bit!"
+
+[commands.fun.cat]
+name = "cat"
+description = "Get a random cat picture or GIF, that can even say something."
+title = "🐱 Meow!"
+error = "😿 I couldn't fetch a cat right now. Try again in a bit!"
+
+[commands.fun.cat.options.gif]
+name = "gif"
+description = "Send a GIF instead of a picture."
+
+[commands.fun.cat.options.says]
+name = "says"
+description = "Text for the cat to say."
+
+[commands.fun.roll]
+name = "roll"
+description = "Roll a die. 🎲"
+response = "🎲 You rolled **{value}** on a d{sides}!"
+
+[commands.fun.roll.options.sides]
+name = "sides"
+description = "How many sides the die has (6 by default)."
+
+[commands.fun.sonic]
+name = "sonic"
+description = "Make Sonic say something."
+
+[commands.fun.sonic.options.text]
+name = "text"
+description = "What Sonic should say."
+
+[commands.fun.sonic_message]
+label = "Sonic"
+
+[commands.fun.quote_message]
+label = "Make it a quote"
+
+[commands.fun.deepfry_message]
+label = "Deepfry"
+
+[commands.fun.jpeg_message]
+label = "JPEG"
+
+[commands.fun.pixelate_message]
+label = "Pixelate"
+
+[commands.fun.image_edit]
+no_image = "🖼️ That message has no image I can use."
+too_big = "📦 That image is too big for me (the limit is 10 MB)."
+not_an_image = "😵 I couldn't open that file as an image."
+download_failed = "📡 I couldn't download that image. Try again in a bit!"
+
+[commands.user]
+open_original = "[🔗 Open original]({url})"
+
+[commands.user.member_option]
+name = "member"
+description = "Who to use (you by default)."
+
+[commands.user.avatar]
+name = "avatar"
+description = "Show someone's avatar in full size."
+title = "🖼️ {name}'s avatar"
+
+[commands.user.banner]
+name = "banner"
+description = "Show someone's profile banner."
+title = "🏞️ {name}'s banner"
+accent_only = "🎨 **{name}** has no banner, but their profile color is `{color}`."
+none = "🫥 **{name}** has no banner."
+error = "😵 I couldn't load that profile right now. Try again in a bit!"
+
+[commands.user.pet]
+name = "pet"
+description = "Pet someone! 🫳"
+response = "🫳 **{author}** pets **{target}**"
+error = "😿 I couldn't get their avatar right now. Try again in a bit!"
+
+[commands.web.search]
+name = "search"
+description = "Search the web."
+
+[commands.web.search.image]
+name = "image"
+description = "Search the web for images."
+footer = "🔎 {query} | {source}"
+unavailable = "🛠️ Search isn't available right now. Try again in a bit!"
+no_results = "🫥 No images found for **{query}**."
+
+[commands.web.search.image.options.query]
+name = "query"
+description = "What to search for."

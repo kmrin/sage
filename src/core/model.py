@@ -8,6 +8,7 @@ import crescent
 import hikari
 
 if TYPE_CHECKING:
+    import aiohttp
     import miru
     import ongaku
 
@@ -27,6 +28,7 @@ class SageModel:
     sync: GuildSync
     miru: miru.Client
     ongaku: ongaku.Client
+    http: aiohttp.ClientSession
     started_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 

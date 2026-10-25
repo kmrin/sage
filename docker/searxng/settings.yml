@@ -1,0 +1,28 @@
+# Everything not set here comes from SearXNG's defaults (use_default_settings).
+# The secret key comes from SEARXNG_SECRET in .env.
+use_default_settings:
+  engines:
+    # Tor (.onion) engines
+    remove:
+      - ahmia
+      - torch
+
+general:
+  instance_name: "Sage Search"
+  enable_metrics: false
+
+server:
+  limiter: false
+  public_instance: false
+  image_proxy: false
+
+search:
+  # Strict.
+  safe_search: 2
+  autocomplete: ""
+  formats:
+    - html
+    - json
+
+outgoing:
+  request_timeout: 5.0

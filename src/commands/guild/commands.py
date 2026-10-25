@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import functools
 import operator
-from typing import TYPE_CHECKING, Final, cast
+from typing import TYPE_CHECKING, Final
 
 import crescent
 import hikari
@@ -17,11 +17,11 @@ from commands.guild.welcome import (
 )
 from core.i18n import LocaleKeys, tr
 from core.model import SagePlugin, model_of
+from core.options import optional_text
 from core.permissions import guild_admin
 from models.db import GuildAutoRoleConfig, GuildConfig, GuildWelcomeChannelConfig
 
 if TYPE_CHECKING:
-    from crescent.commands.options import ClassCommandOption
     from sqlalchemy.ext.asyncio import AsyncSession
 
 plugin = SagePlugin()
@@ -41,20 +41,6 @@ ROLE_MANAGERS: Final = hikari.Permissions.ADMINISTRATOR | hikari.Permissions.MAN
 NAME_LIMIT: Final = 100
 
 
-def _text_option(
-    keys: LocaleKeys, *, max_length: int
-) -> ClassCommandOption[str | None, str | None]:
-    option = crescent.option(
-        str,
-        name=keys.localized("name"),
-        description=keys.localized("description"),
-        default=None,
-        max_length=max_length,
-    )
-    # crescent 1.4 types a defaulted str option as `int | DEFAULT` (upstream typo)
-    return cast("ClassCommandOption[str | None, str | None]", option)
-
-
 @plugin.include
 @set_group.child
 @guild_admin
@@ -69,9 +55,9 @@ class SetWelcomeChannel:
         description=welcome_options.localized("channel.description"),
         default=None,
     )
-    title = _text_option(welcome_options.child("title"), max_length=TITLE_LIMIT)
-    message = _text_option(welcome_options.child("message"), max_length=MESSAGE_LIMIT)
-    color = _text_option(welcome_options.child("color"), max_length=7)
+    title = optional_text(welcome_options.child("title"), max_length=TITLE_LIMIT)
+    message = optional_text(welcome_options.child("message"), max_length=MESSAGE_LIMIT)
+    color = optional_text(welcome_options.child("color"), max_length=7)
     show_avatar = crescent.option(
         bool,
         name=welcome_options.localized("show_avatar.name"),

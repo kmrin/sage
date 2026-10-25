@@ -16,6 +16,7 @@ from core import i18n
 from core.boot import BootError, BootReport, verify_discord
 from core.database import Database, DatabaseUnavailableError
 from core.env import load_env
+from core.http import create_session
 from core.loader import load_plugins
 from core.logger import LogSession, get_logger, set_debug, setup_logging
 from core.model import SageModel
@@ -144,6 +145,7 @@ async def _run_bot(settings: Settings, database: Database, report: BootReport) -
     )
 
     sync = GuildSync(database, owner_id=report.owner.owner_id)
+    http = create_session(settings.version)
     model = SageModel(
         settings=settings,
         database=database,
@@ -151,6 +153,7 @@ async def _run_bot(settings: Settings, database: Database, report: BootReport) -
         sync=sync,
         miru=miru_client,
         ongaku=ongaku_client,
+        http=http,
     )
 
     client = crescent.Client(bot, model, default_guild=settings.dev_guild_id)
@@ -193,6 +196,7 @@ async def _run_bot(settings: Settings, database: Database, report: BootReport) -
             await bot.close()
         with contextlib.suppress(asyncio.CancelledError):
             await joined
+        await http.close()
         paths.heartbeat.unlink(missing_ok=True)
         log.info("Goodbye")
 

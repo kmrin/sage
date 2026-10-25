@@ -10,6 +10,9 @@ guild_restricted = "Este comando não está disponível neste servidor."
 [errors.guild]
 not_synced = "⏳ A Sage ainda está conhecendo este servidor. Tente de novo em alguns segundos."
 
+[errors.paginator]
+not_yours = "Esses botões são de quem usou o comando."
+
 [commands.core.ping]
 name = "ping"
 description = "Verifica se a Sage está online e quão rápido ela responde."
@@ -103,3 +106,106 @@ description = "O cargo para dar aos novos membros."
 [commands.guild.set.auto_role.options.enabled]
 name = "ativado"
 description = "Liga ou desliga o cargo automático."
+
+[commands.fun]
+no_text = "Não tem nenhum texto aí para eu usar."
+
+[commands.fun.dog]
+name = "cachorro"
+description = "Receba uma foto aleatória de cachorro."
+title = "🐶 Woof!"
+breed = "Raça: {breed}"
+error = "🐾 Não consegui buscar um cachorro agora. Tente de novo daqui a pouco!"
+
+[commands.fun.cat]
+name = "gato"
+description = "Receba uma foto ou GIF aleatório de gato, que pode até dizer algo."
+title = "🐱 Miau!"
+error = "😿 Não consegui buscar um gato agora. Tente de novo daqui a pouco!"
+
+[commands.fun.cat.options.gif]
+name = "gif"
+description = "Envia um GIF em vez de uma foto."
+
+[commands.fun.cat.options.says]
+name = "diz"
+description = "Texto para o gato dizer."
+
+[commands.fun.roll]
+name = "rolar"
+description = "Rola um dado. 🎲"
+response = "🎲 Você tirou **{value}** em um d{sides}!"
+
+[commands.fun.roll.options.sides]
+name = "lados"
+description = "Quantos lados o dado tem (6 por padrão)."
+
+[commands.fun.sonic]
+name = "sonic"
+description = "Faça o Sonic dizer algo."
+
+[commands.fun.sonic.options.text]
+name = "texto"
+description = "O que o Sonic deve dizer."
+
+[commands.fun.sonic_message]
+label = "Sonic"
+
+[commands.fun.quote_message]
+label = "Transformar em citação"
+
+[commands.fun.deepfry_message]
+label = "Fritar"
+
+[commands.fun.jpeg_message]
+label = "JPEG"
+
+[commands.fun.pixelate_message]
+label = "Pixelar"
+
+[commands.fun.image_edit]
+no_image = "🖼️ Essa mensagem não tem nenhuma imagem que eu possa usar."
+too_big = "📦 Essa imagem é grande demais para mim (o limite é 10 MB)."
+not_an_image = "😵 Não consegui abrir esse arquivo como imagem."
+download_failed = "📡 Não consegui baixar essa imagem. Tente de novo daqui a pouco!"
+
+[commands.user]
+open_original = "[🔗 Abrir original]({url})"
+
+[commands.user.member_option]
+name = "membro"
+description = "Quem usar (você, por padrão)."
+
+[commands.user.avatar]
+name = "avatar"
+description = "Mostra o avatar de alguém em tamanho real."
+title = "🖼️ Avatar de {name}"
+
+[commands.user.banner]
+name = "banner"
+description = "Mostra o banner do perfil de alguém."
+title = "🏞️ Banner de {name}"
+accent_only = "🎨 **{name}** não tem banner, mas a cor do perfil é `{color}`."
+none = "🫥 **{name}** não tem banner."
+error = "😵 Não consegui carregar esse perfil agora. Tente de novo daqui a pouco!"
+
+[commands.user.pet]
+name = "carinho"
+description = "Faça carinho em alguém! 🫳"
+response = "🫳 **{author}** faz carinho em **{target}**"
+error = "😿 Não consegui pegar o avatar agora. Tente de novo daqui a pouco!"
+
+[commands.web.search]
+name = "pesquisar"
+description = "Pesquise na web."
+
+[commands.web.search.image]
+name = "imagem"
+description = "Pesquise imagens na web."
+footer = "🔎 {query} · {source}"
+unavailable = "🛠️ A pesquisa não está disponível agora. Tente de novo daqui a pouco!"
+no_results = "🫥 Nenhuma imagem encontrada para **{query}**."
+
+[commands.web.search.image.options.query]
+name = "busca"
+description = "O que pesquisar."

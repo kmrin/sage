@@ -12,6 +12,7 @@ __all__ = (
     "DatabaseSettings",
     "DiscordSettings",
     "LavalinkSettings",
+    "SearxngSettings",
     "Settings",
     "SettingsError",
     "Snowflake",
@@ -66,6 +67,13 @@ class LavalinkSettings(_Base):
     ssl: bool = False
 
 
+class SearxngSettings(_Base):
+    model_config = SettingsConfigDict(env_prefix="SEARXNG_")
+
+    # Sage's private SearXNG (the sage-searxng container), used by /search
+    url: str = Field(default="http://sage-searxng:8080", pattern=r"^https?://")
+
+
 class DiscordSettings(_Base):
     model_config = SettingsConfigDict(env_prefix="DISCORD_")
 
@@ -99,6 +107,7 @@ class Settings(_Base):
     discord: DiscordSettings
     database: DatabaseSettings
     lavalink: LavalinkSettings
+    searxng: SearxngSettings
 
     _blank_dev_guild = field_validator("dev_guild_id", mode="before")(_blank_to_none)
 
@@ -135,6 +144,7 @@ def get_settings() -> Settings:
         ("discord", DiscordSettings),
         ("database", DatabaseSettings),
         ("lavalink", LavalinkSettings),
+        ("searxng", SearxngSettings),
     ):
         try:
             groups[name] = model()  # pyright: ignore[reportCallIssue]

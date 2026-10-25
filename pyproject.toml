@@ -13,6 +13,7 @@ dependencies = [
     # NOTE: ongaku 1.0.4 pins hikari ~=2.5.0; keep hikari in lockstep until ongaku moves
     "hikari-ongaku~=1.0.4",
     "hikari[speedups]~=2.5.0",
+    "pillow>=13.0.0",
     "pydantic>=2.14.1",
     "pydantic-settings>=2.16.1",
     "python-dotenv>=1.2.4",

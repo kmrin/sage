@@ -5,12 +5,14 @@ Sage is a general-purpose Discord bot built on hikari, crescent, miru and ongaku
 For a dev environment: run sage on your own machine with localhost access to the database and lavalink.
 
 ```Bash
-# 1. Set _HOST variables to localhost
+# 1. Point Sage at the services on localhost, and give SearXNG a secret (openssl rand -hex 32)
 POSTGRES_HOST=127.0.0.1
 LAVALINK_HOST=127.0.0.1
+SEARXNG_URL=http://127.0.0.1:8888
+SEARXNG_SECRET=<random string>
 
-# 2. Start the database and lavalink with dev settings
-docker compose -f compose.yaml -f compose.dev.yaml up -d sage-db sage-lavalink
+# 2. Start the database, lavalink and searxng with dev settings
+docker compose -f compose.yaml -f compose.dev.yaml up -d sage-db sage-lavalink sage-searxng
 
 # 3. Create the test database
 docker exec sage-db createdb -U sage sage_test
@@ -30,7 +32,7 @@ uv run python src/main.py
 For a more straightforward run, as in, the version you wish to run is final, simply use docker.
 
 ```Bash
-# 1. Set _HOST variables to docker hosts
+# 1. Set _HOST variables to docker hosts, and set SEARXNG_SECRET (compose won't start without it)
 POSTGRES_HOST=sage-db
 LAVALINK_HOST=sage-lavalink
 
@@ -48,26 +50,34 @@ Everything Sage runs lives under `src/`, which is also the import root (`from co
 src/
 ├── main.py                 # Entry point: loads settings, checks Discord, connects the db, builds the clients, loads plugins
 ├── assets/                 # Static files shipped with the bot (read-only at runtime)
-│   └── docs/               # Terms of Service and Privacy Policy
+│   ├── docs/               # Terms of Service and Privacy Policy
+│   ├── fonts/              # Fonts for generated images
+│   └── images/             # Images
 ├── commands/               # Slash commands, one package per category (see "How to build plugins")
 │   ├── core/
 │   │   ├── commands.py     # Core commands such as /ping
 │   │   └── models.py       # Category-local models used my core.commands
-│   └── guild/
-│       ├── commands.py     # Admin-only server settings: /set welcome_channel, /set auto_role
-│       ├── events.py       # Member-join listener that gives the auto role and sends the welcome embed
-│       ├── models.py       # Welcome message placeholders and color parsing
-│       └── welcome.py      # Welcome embed builder shared by commands.py (preview) and events.py
+│   ├── guild/
+│   │   ├── commands.py     # Admin-only server settings: /set welcome_channel, /set auto_role
+│   │   ├── events.py       # Member-join listener that gives the auto role and sends the welcome embed
+│   │   ├── models.py       # Welcome message placeholders and color parsing
+│   │   └── welcome.py      # Welcome embed builder shared by commands.py (preview) and events.py
+│   └──...others
 ├── core/                   # Framework code shared by every plugin
 │   ├── boot.py             # Pre-flight Discord checks: token, owner, privileged intents
 │   ├── database.py         # Async SQLAlchemy engine + session factory
 │   ├── emojis.py           # Application emoji registry and the list of emojis the code requires
 │   ├── env.py              # Loads the root .env file (never overrides real environment variables)
 │   ├── heartbeat.py        # Writes/reads the heartbeat file used by the container healthcheck
+│   ├── http.py             # The shared aiohttp session for outside APIs (user agent, timeouts)
 │   ├── i18n.py             # Locale catalog, validation and the t()/tr()/Localized/LocaleKeys helpers
+│   ├── interactions.py     # Reply helpers: EVERYWHERE, label(), fail_after_defer(), send_rendered()
 │   ├── loader.py           # Discovers and loads every command category and event module
 │   ├── logger.py           # Rich console + file logging, log rotation, get_logger()
+│   ├── media.py            # Loading/saving images and GIFs for commands that edit them (Pillow)
 │   ├── model.py            # SageModel (shared state handed to plugins), SagePlugin, model_of()
+│   ├── options.py          # Option helpers, like optional_text() for crescent's mistyped optional str options
+│   ├── paginator.py        # PaginatedResponse: ⏮️ ◀️ 1/10 ▶️ ⏭️ buttons for multi-page replies (miru)
 │   ├── paths.py            # Every filesystem path Sage uses (data dir, logs, assets, locales...)
 │   ├── permissions.py      # Command guards: owner_only, guild_only, guild_admin, guild_specific
 │   └── sync.py             # Keeps guilds, members, admins and the owner in the db in sync with Discord
@@ -102,7 +112,8 @@ Inside a plugin you have:
 | What | How |
 | --- | --- |
 | The hikari bot (REST, cache, `get_me()`...) | `plugin.app` |
-| Shared state: `settings`, `database`, `emojis`, `sync`, `miru`, `ongaku`, `started_at` | `plugin.model` (or `model_of(ctx)` from code that only has a context) |
+| Shared state: `settings`, `database`, `emojis`, `sync`, `miru`, `ongaku`, `http`, `started_at` | `plugin.model` (or `model_of(ctx)` from code that only has a context) |
+| An HTTP client for outside APIs | `plugin.model.http`, one shared `aiohttp.ClientSession` that raises on non-2xx responses and times out after 15s. Don't create your own sessions. |
 | A logger | `log = get_logger("MyFeature")` from `core.logger` |
 
 ### Commands and categories
@@ -189,6 +200,42 @@ class SetAutoRole: ...
 - Guards still go on each subcommand. A guard on one subcommand doesn't cover its siblings.
 - Discord doesn't allow `default_member_permissions` on subcommands, only on the `crescent.Group`.
 - `group.sub_group("name", ...)` adds one more level (`/set server welcome_channel`), which Discord caps at that depth.
+
+#### Context menu commands
+Right-click commands (Apps → Sage → ...) are plain functions, like the ones in [`commands/fun/commands.py`](./src/commands/fun/commands.py). Name them with a `label` key, which unlike slash names may have capitals and spaces:
+
+```python
+from core.interactions import EVERYWHERE, label
+
+
+@plugin.include
+@crescent.message_command(name=label(quote_keys), context_types=EVERYWHERE)
+async def quote_message(ctx: crescent.Context, message: hikari.Message) -> None: ...
+```
+
+- crescent types `name` as `str` but accepts a `Localized` at runtime, so `label()` casts `keys.localized("label")`.
+- Discord allows at most 5 message commands and 5 user commands (`crescent.user_command`) per bot. Sage uses all 5 message commands (Sonic, Make it a quote, Deepfry, JPEG, Pixelate), so a new one means replacing one of those.
+
+#### Where commands are available
+Pass `context_types` to choose where a command shows up, e.g. `EVERYWHERE` from [`core/interactions.py`](./src/core/interactions.py) (`[GUILD, BOT_DM]`) for servers and DMs with Sage. Commands registered to `SAGE_DEV_GUILD_ID` only exist in that server, so DM availability can only be checked with global registration.
+
+#### Slow commands
+Discord drops interactions that aren't answered within 3 seconds. Anything that calls an outside API or renders an image starts with `await ctx.defer()`. After a public defer the reply can't become private, so to show an error privately, delete the deferred response and send the error with `ctx.interaction.execute(..., flags=hikari.MessageFlag.EPHEMERAL)`. `fail_after_defer(ctx, key, **values)` in [`core/interactions.py`](./src/core/interactions.py) does both. Run CPU-heavy work (Pillow, parsing big files) with `asyncio.to_thread()` so it doesn't block the bot. `send_rendered(ctx, render, filename)` runs a render function that way and posts the file.
+
+#### Paginated replies
+For results that span several pages, build a list of pages (embeds or text) and send a [`PaginatedResponse`](./src/core/paginator.py). It adds ⏮️ ◀️ `1/10` ▶️ ⏭️ buttons, only lets the person who ran the command turn pages, and switches the buttons off after 5 idle minutes. It works before or after `ctx.defer()`, and a single page is sent without buttons:
+
+```python
+from core.paginator import PaginatedResponse
+
+pages = [hikari.Embed(title=result.title).set_image(result.image_url) for result in results]
+await PaginatedResponse(pages, owner_id=ctx.user.id).send(ctx, model_of(ctx).miru)
+```
+
+`/search image` in [`commands/web/commands.py`](./src/commands/web/commands.py) is the reference. Pass `ephemeral=True` to `send()` for a private paginator (keep its `timeout` under 15 minutes, Discord's limit for editing those).
+
+#### Editing images
+[`core/media.py`](./src/core/media.py) turns downloaded bytes into frames and back: `load()` gives every frame as RGBA (stills are one frame), shrunk to keep edits fast, and with long GIFs thinned out. `encode_gif()` writes GIFs that keep transparency, and `fit_upload()` shrinks the result until it fits Discord's 10 MB limit. Download with `core.http.download()`, which stops at 10 MB too. The Deepfry, JPEG and Pixelate effects in [`commands/fun/edits.py`](./src/commands/fun/edits.py) show the whole flow.
 
 During development, set `SAGE_DEV_GUILD_ID` so commands register to a single server instantly instead of waiting on Discord's global command propagation.
 
@@ -279,7 +326,7 @@ The rules, all checked at startup (Sage won't boot if any fail, and the log list
 - `en-US` is required. It's the fallback and the reference every other file is compared against.
 - Every locale must have exactly the same keys as `en-US`, no missing or extra ones, and no empty values.
 - Each translation must use the same `{placeholders}` as its `en-US` version. Write `{{` and `}}` for literal braces.
-- Under `commands.*`, keys ending in `name` must be valid slash names (lowercase, no spaces, 1-32 characters) and keys ending in `description` must be 1-100 characters.
+- Under `commands.*`, keys ending in `name` must be valid slash names (lowercase, no spaces, 1-32 characters), keys ending in `label` (context menu names) must be 1-32 characters, and keys ending in `description` must be 1-100 characters. Name embed text and other replies something else (`title`, `summary`...) so these rules don't apply to them.
 
 Add a language by creating a new file with the same keys. It's picked up on the next start.
 

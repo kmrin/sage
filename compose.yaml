@@ -33,12 +33,15 @@ services:
       POSTGRES_PORT: "5432"
       LAVALINK_HOST: sage-lavalink
       LAVALINK_PORT: "2333"
+      SEARXNG_URL: http://sage-searxng:8080
     depends_on:
       sage-db:
         condition: service_healthy
         restart: true
       sage-lavalink:
         condition: service_healthy
+      sage-searxng:
+        condition: service_started
     volumes:
       - sage-data:/var/lib/sage
     networks:
@@ -143,8 +146,37 @@ services:
         limits:
           memory: 1G
 
+  sage-searxng:
+    <<: *hardening
+    image: searxng/searxng:latest
+    container_name: sage-searxng
+    hostname: sage-searxng
+    user: "977:977"
+    environment:
+      SEARXNG_SECRET: ${SEARXNG_SECRET:?SEARXNG_SECRET must be set in .env}
+    volumes:
+      - ./docker/searxng/settings.yml:/etc/searxng/settings.yml:ro
+      - sage-searxng-cache:/var/cache/searxng
+    networks:
+      - sage-backend
+      - sage-egress
+    expose:
+      - "8080"
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
 networks:
-  # Bot <-> DB <-> Lavalink
+  # Bot <-> DB <-> Lavalink <-> SearXNG
   sage-backend:
     name: sage-backend
     internal: true
@@ -159,3 +191,5 @@ volumes:
     name: sage-db-data
   sage-lavalink-plugins:
     name: sage-lavalink-plugins
+  sage-searxng-cache:
+    name: sage-searxng-cache
