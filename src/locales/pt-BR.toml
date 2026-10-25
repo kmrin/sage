@@ -7,6 +7,9 @@ guild_only = "Este comando só pode ser usado dentro de um servidor."
 guild_admin = "Você precisa de permissão de administrador neste servidor para usar este comando."
 guild_restricted = "Este comando não está disponível neste servidor."
 
+[errors.guild]
+not_synced = "⏳ A Sage ainda está conhecendo este servidor. Tente de novo em alguns segundos."
+
 [commands.core.ping]
 name = "ping"
 description = "Verifica se a Sage está online e quão rápido ela responde."
@@ -34,3 +37,65 @@ links = "🔗 Links"
 latency = "{latency} ms"
 latency_pending = "Medindo..."
 links = "[Código-fonte]({source}) | [Termos de Serviço]({terms}) | [Política de Privacidade]({privacy})"
+
+[commands.guild.set_welcome_channel]
+name = "definir_canal_boas_vindas"
+description = "Receba novos membros com um embed personalizado no canal que você escolher."
+saved = "✅ Novos membros serão recebidos em {channel}. Veja uma prévia:"
+hint = 'Placeholders: `{{user}}`, `{{username}}`, `{{server}}` e `{{member_count}}`. Escreva `\n` para quebrar a linha.'
+disabled = "🔕 As mensagens de boas-vindas estão desligadas. Suas configurações ficam salvas para quando você religar."
+no_channel = "Escolha um canal primeiro para eu saber onde receber as pessoas."
+invalid_color = "`{color}` não é uma cor válida. Use um código hex como `#9B59B6`."
+default_title = "👋 Boas-vindas, {username}!"
+default_message = "Olá {user}, boas-vindas ao **{server}**! Você é o membro **#{member_count}**."
+
+[commands.guild.set_welcome_channel.options.channel]
+name = "canal"
+description = "Onde enviar as mensagens de boas-vindas."
+
+[commands.guild.set_welcome_channel.options.title]
+name = "titulo"
+description = "Título do embed. Marcadores: {user} {username} {server} {member_count}"
+
+[commands.guild.set_welcome_channel.options.message]
+name = "mensagem"
+description = 'Texto do embed. Mesmos placeholders do título, e \n para quebrar a linha.'
+
+[commands.guild.set_welcome_channel.options.color]
+name = "cor"
+description = "Cor do embed em código hex."
+
+[commands.guild.set_welcome_channel.options.show_avatar]
+name = "mostrar_avatar"
+description = "Mostra o avatar do membro no embed."
+
+[commands.guild.set_welcome_channel.options.reset]
+name = "redefinir"
+description = "Volta para o título, texto e cor padrão."
+
+[commands.guild.set_welcome_channel.options.enabled]
+name = "ativado"
+description = "Liga ou desliga as mensagens de boas-vindas."
+
+[commands.guild.set_auto_role]
+name = "definir_cargo_automatico"
+description = "Dá um cargo automaticamente para todo mundo que entrar no servidor."
+saved = "✅ Novos membros vão receber {role} quando entrarem."
+disabled = "🔕 O cargo automático está desligado. O cargo fica salvo para quando você religar."
+no_role = "Escolha um cargo primeiro para eu saber o que dar aos novos membros."
+audit_reason = "Cargo automático para novos membros"
+
+[commands.guild.set_auto_role.problems]
+everyone = "Todo mundo já tem o `@everyone`, escolha outro cargo."
+managed = "{role} é gerenciado por uma integração e não pode ser dado manualmente."
+missing_permission = "🔒 Eu preciso da permissão **Gerenciar cargos** para dar cargos."
+too_high = "⬆️ {role} está acima do meu cargo mais alto. Mova meu cargo para cima dele em **Configurações do servidor → Cargos**."
+gone = "❓ O cargo salvo não existe mais. Escolha um novo."
+
+[commands.guild.set_auto_role.options.role]
+name = "cargo"
+description = "O cargo para dar aos novos membros."
+
+[commands.guild.set_auto_role.options.enabled]
+name = "ativado"
+description = "Liga ou desliga o cargo automático."

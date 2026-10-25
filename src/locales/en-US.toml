@@ -7,6 +7,9 @@ guild_only = "This command can only be used inside a server."
 guild_admin = "You need admin permissions in this server to use this command."
 guild_restricted = "This command isn't available in this server."
 
+[errors.guild]
+not_synced = "⏳ Sage is still getting to know this server. Try again in a few seconds."
+
 [commands.core.ping]
 name = "ping"
 description = "Check that Sage is online and how fast it responds."
@@ -34,3 +37,65 @@ links = "🔗 Links"
 latency = "{latency} ms"
 latency_pending = "Measuring..."
 links = "[Source code]({source}) | [Terms of Service]({terms}) | [Privacy Policy]({privacy})"
+
+[commands.guild.set_welcome_channel]
+name = "set_welcome_channel"
+description = "Greet new members with a custom embed in a channel of your choice."
+saved = "✅ New members will be welcomed in {channel}. Here's a preview:"
+hint = 'Placeholders: `{{user}}`, `{{username}}`, `{{server}}` and `{{member_count}}`. Write `\n` for a new line.'
+disabled = "🔕 Welcome messages are off. Your settings are kept for when you turn them back on."
+no_channel = "Pick a channel first so I know where to welcome people."
+invalid_color = "`{color}` isn't a valid color. Use a hex code like `#9B59B6`."
+default_title = "👋 Welcome, {username}!"
+default_message = "Hey {user}, welcome to **{server}**! You're member **#{member_count}**."
+
+[commands.guild.set_welcome_channel.options.channel]
+name = "channel"
+description = "Where to send welcome messages."
+
+[commands.guild.set_welcome_channel.options.title]
+name = "title"
+description = "Embed title. Placeholders: {user} {username} {server} {member_count}"
+
+[commands.guild.set_welcome_channel.options.message]
+name = "message"
+description = 'Embed text. Same placeholders as the title, plus \n for a new line.'
+
+[commands.guild.set_welcome_channel.options.color]
+name = "color"
+description = "Embed color as a hex code."
+
+[commands.guild.set_welcome_channel.options.show_avatar]
+name = "show_avatar"
+description = "Show the member's avatar in the embed."
+
+[commands.guild.set_welcome_channel.options.reset]
+name = "reset"
+description = "Go back to the default title, text and color."
+
+[commands.guild.set_welcome_channel.options.enabled]
+name = "enabled"
+description = "Turn welcome messages on or off."
+
+[commands.guild.set_auto_role]
+name = "set_auto_role"
+description = "Automatically give a role to everyone who joins the server."
+saved = "✅ New members will get {role} when they join."
+disabled = "🔕 Auto role is off. The role is kept for when you turn it back on."
+no_role = "Pick a role first so I know what to give new members."
+audit_reason = "Auto role for new members"
+
+[commands.guild.set_auto_role.problems]
+everyone = "Everyone already has `@everyone`, pick another role."
+managed = "{role} is managed by an integration and can't be given out by hand."
+missing_permission = "🔒 I need the **Manage Roles** permission to give out roles."
+too_high = "⬆️ {role} is above my highest role. Move my role above it in **Server Settings → Roles**."
+gone = "❓ The saved role doesn't exist anymore. Pick a new one."
+
+[commands.guild.set_auto_role.options.role]
+name = "role"
+description = "The role to give new members."
+
+[commands.guild.set_auto_role.options.enabled]
+name = "enabled"
+description = "Turn auto role on or off."
