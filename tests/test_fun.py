@@ -36,6 +36,13 @@ def client() -> crescent.Client:
     return client
 
 
+def image_bytes(fmt: str, size: tuple[int, int] = (80, 60), frames: int = 1) -> bytes:
+    images = [Image.new("RGB", size, (i * 60, 100, 200)) for i in range(frames)]
+    buffer = io.BytesIO()
+    images[0].save(buffer, format=fmt, save_all=frames > 1, append_images=images[1:])
+    return buffer.getvalue()
+
+
 def ctx(locale: str = "en-US") -> Any:
     context = make_ctx(locale=locale)
     context.defer = AsyncMock()
@@ -112,11 +119,6 @@ def test_dog_photo_rejects_bad_responses(data: Any) -> None:
 )
 def test_cat_urls(request_: CatRequest, url: str) -> None:
     assert request_.url == url
-
-
-@pytest.mark.parametrize(("content_type", "name"), [("image/gif", "cat.gif"), ("image/png", "cat.png"), ("image/jpeg", "cat.jpg"), ("text/weird", "cat.jpg")])
-def test_cat_filenames(content_type: str, name: str) -> None:
-    assert CatImage(data=b"", content_type=content_type).filename == name
 
 
 def test_clean_text_turns_markup_into_plain_text() -> None:
@@ -214,13 +216,17 @@ def test_commands_work_in_servers_and_dms(client: crescent.Client, attribute: st
 async def test_dog(client: crescent.Client, monkeypatch: pytest.MonkeyPatch) -> None:
     photo = DogPhoto(url="https://images.dog.ceo/breeds/pug/x.jpg", breed="Pug")
     monkeypatch.setattr(_commands(), "fetch_dog", AsyncMock(return_value=photo))
+    download = AsyncMock(return_value=image_bytes("JPEG"))
+    monkeypatch.setattr(_commands(), "download", download)
     context = ctx("pt-BR")
     await _commands().Dog.metadata.callback(context)
 
     context.defer.assert_awaited_once()
+    assert download.await_args.args[1] == photo.url
     embed: hikari.Embed = context.respond.await_args.kwargs["embed"]
     assert embed.title == t("commands.fun.dog.title", "pt-BR")
-    assert embed.image is not None and embed.image.url == photo.url
+    # uploaded, not linked: Discord never has to fetch dog.ceo itself
+    assert embed.image is not None and embed.image.filename == "dog.jpg"
     assert embed.footer is not None and embed.footer.text == t("commands.fun.dog.breed", "pt-BR", breed="Pug")
 
 
@@ -234,7 +240,7 @@ async def test_dog_failure_is_private(client: crescent.Client, monkeypatch: pyte
 
 
 async def test_cat_says_cleaned_text(client: crescent.Client, monkeypatch: pytest.MonkeyPatch) -> None:
-    fetch = AsyncMock(return_value=CatImage(data=b"GIF89a", content_type="image/gif"))
+    fetch = AsyncMock(return_value=CatImage(data=image_bytes("GIF", frames=3), content_type="image/gif"))
     monkeypatch.setattr(_commands(), "fetch_cat", fetch)
     context = ctx()
     await _commands().Cat.metadata.callback(context, gif=True, says="**hi** 😀")

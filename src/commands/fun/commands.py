@@ -15,7 +15,7 @@ from core.http import FETCH_ERRORS, TooLargeError, download
 from core.i18n import LocaleKeys, tr
 from core.interactions import EVERYWHERE, fail_after_defer, label, send_rendered
 from core.logger import get_logger
-from core.media import BadImageError, Encoded, fit_upload, load
+from core.media import BadImageError, Encoded, fit_upload, load, prepare
 from core.model import SagePlugin, model_of
 from core.options import optional_text
 
@@ -61,15 +61,17 @@ class Dog:
     async def callback(self, ctx: crescent.Context) -> None:
         await ctx.defer()
 
+        http = model_of(ctx).http
         try:
-            photo = await fetch_dog(model_of(ctx).http)
+            photo = await fetch_dog(http)
+            image = await asyncio.to_thread(prepare, await download(http, photo.url))
         except FETCH_ERRORS as error:
             log.warn("dog.ceo request failed: %s", error)
             await fail_after_defer(ctx, dog_keys("error"))
             return
 
         embed = hikari.Embed(title=tr(ctx, dog_keys("title")), color=DOG_COLOR)
-        embed.set_image(photo.url)
+        embed.set_image(hikari.Bytes(image.data, f"dog.{image.extension}"))
         if photo.breed:
             embed.set_footer(tr(ctx, dog_keys("breed"), breed=photo.breed))
         await ctx.respond(embed=embed)
@@ -96,13 +98,14 @@ class Cat:
 
         try:
             cat = await fetch_cat(model_of(ctx).http, CatRequest(gif=self.gif, says=says or None))
+            image = await asyncio.to_thread(prepare, cat.data)
         except FETCH_ERRORS as error:
             log.warn("cataas request failed: %s", error)
             await fail_after_defer(ctx, cat_keys("error"))
             return
 
         embed = hikari.Embed(title=tr(ctx, cat_keys("title")), color=CAT_COLOR)
-        embed.set_image(hikari.Bytes(cat.data, cat.filename))
+        embed.set_image(hikari.Bytes(image.data, f"cat.{image.extension}"))
         await ctx.respond(embed=embed)
 
 

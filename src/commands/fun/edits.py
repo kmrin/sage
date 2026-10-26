@@ -4,9 +4,9 @@ import io
 import math
 from typing import Final
 
-from PIL import Image, ImageChops, ImageEnhance, ImageOps
+from PIL import Image, ImageChops, ImageEnhance
 
-from core.media import Animation, Encoded, encode_gif
+from core.media import Animation, Encoded, encode_gif, has_transparency
 
 __all__ = ("deepfry", "jpegify", "pixelate")
 
@@ -21,7 +21,7 @@ def deepfry(animation: Animation) -> Encoded:
     if fried.animated:
         return Encoded(encode_gif(fried), "gif")
     frame = fried.frames[0]
-    if _has_transparency(frame):
+    if has_transparency(frame):
         return Encoded(_png(frame), "png")
     return Encoded(_jpeg(frame.convert("RGB"), quality=25), "jpg")
 
@@ -71,11 +71,6 @@ def _crunch(image: Image.Image, *, quality: int, scale: float) -> Image.Image:
     small = image.resize((max(1, round(width * scale)), max(1, round(height * scale))))
     with Image.open(io.BytesIO(_jpeg(small, quality=quality))) as crunched:
         return crunched.convert("RGB").resize((width, height), Image.Resampling.NEAREST)
-
-
-def _has_transparency(frame: Image.Image) -> bool:
-    # any pixel below full opacity leaves something behind once the alpha is inverted
-    return ImageOps.invert(frame.getchannel("A")).getbbox() is not None
 
 
 def _jpeg(image: Image.Image, *, quality: int) -> bytes:

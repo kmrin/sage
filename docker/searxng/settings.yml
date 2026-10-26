@@ -26,3 +26,7 @@ search:
 
 outgoing:
   request_timeout: 5.0
+
+plugins:
+  searx.plugins.tracker_url_remover.SXNGPlugin:
+    active: false

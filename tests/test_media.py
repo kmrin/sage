@@ -176,3 +176,62 @@ async def test_multiple_pages_start_on_the_first_with_buttons(bot: hikari.Gatewa
     indicator = next(item for item in view.children if isinstance(item, nav.IndicatorButton))
     assert indicator.label == "1/10"
     start_view.assert_called_once_with(view, bind_to=context.respond.return_value)
+
+
+# prepare(): making downloaded images quick for Discord to show
+
+
+from core.media import prepare  # noqa: E402
+
+
+def encoded(fmt: str, size: tuple[int, int], *, frames: int = 1, mode: str = "RGB", noisy: bool = False) -> bytes:
+    images = []
+    for i in range(frames):
+        image = Image.effect_noise(size, 80).convert(mode) if noisy else Image.new(mode, size, (i * 40 % 256, 90, 160, 255)[: len(mode)])
+        images.append(image)
+    buffer = io.BytesIO()
+    images[0].save(buffer, format=fmt, save_all=frames > 1, append_images=images[1:], duration=50, loop=0)
+    return buffer.getvalue()
+
+
+@pytest.mark.parametrize(("fmt", "extension"), [("JPEG", "jpg"), ("PNG", "png"), ("WEBP", "webp"), ("GIF", "gif")])
+def test_prepare_passes_small_images_through(fmt: str, extension: str) -> None:
+    data = encoded(fmt, (640, 480))
+    assert prepare(data) == Encoded(data, extension)
+
+
+def test_prepare_passes_small_gifs_through() -> None:
+    data = encoded("GIF", (300, 200), frames=6)
+    assert prepare(data) == Encoded(data, "gif")
+
+
+def test_prepare_shrinks_big_photos_to_jpeg() -> None:
+    result = prepare(encoded("PNG", (3000, 2000), noisy=True))
+    image = Image.open(io.BytesIO(result.data))
+    assert (result.extension, image.format, image.size) == ("jpg", "JPEG", (1280, 853))
+
+
+def test_prepare_keeps_transparency_as_png() -> None:
+    big = Image.new("RGBA", (2000, 1000), (255, 0, 0, 255))
+    big.putpixel((0, 0), (0, 0, 0, 0))
+    buffer = io.BytesIO()
+    big.save(buffer, format="PNG")
+    result = prepare(buffer.getvalue())
+    image = Image.open(io.BytesIO(result.data))
+    assert (result.extension, image.size, image.mode) == ("png", (1280, 640), "RGBA")
+
+
+def test_prepare_shrinks_big_gifs() -> None:
+    result = prepare(encoded("GIF", (1000, 500), frames=4))
+    image = Image.open(io.BytesIO(result.data))
+    assert (result.extension, image.size, image.n_frames) == ("gif", (480, 240), 4)
+
+
+def test_prepare_converts_formats_discord_may_not_show() -> None:
+    result = prepare(encoded("BMP", (100, 100)))
+    assert result.extension == "jpg"
+
+
+def test_prepare_rejects_garbage() -> None:
+    with pytest.raises(BadImageError):
+        prepare(b"<html>nope</html>")

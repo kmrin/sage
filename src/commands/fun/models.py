@@ -16,7 +16,6 @@ __all__ = ("CatImage", "CatRequest", "DiceRoll", "DogPhoto", "MentionKind", "cle
 type MentionKind = Literal["user", "role", "channel"]
 
 CAT_API: Final = "https://cataas.com"
-_CAT_EXTENSIONS: Final = {"image/gif": "gif", "image/png": "png", "image/webp": "webp"}
 
 
 class DiceRoll(BaseModel):
@@ -72,10 +71,6 @@ class CatImage(BaseModel):
 
     data: bytes
     content_type: str
-
-    @property
-    def filename(self) -> str:
-        return f"cat.{_CAT_EXTENSIONS.get(self.content_type, 'jpg')}"
 
 
 _MENTION: Final = re.compile(r"<(@!?|@&|#)(\d+)>")

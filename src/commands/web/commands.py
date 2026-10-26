@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Final
 import crescent
 import hikari
 
+from commands.web.images import fetch_images
 from commands.web.searxng import search_images
 from core.http import FETCH_ERRORS
 from core.i18n import LocaleKeys, tr
@@ -14,7 +15,7 @@ from core.model import SagePlugin, model_of
 from core.paginator import PaginatedResponse
 
 if TYPE_CHECKING:
-    from commands.web.models import ImageResult
+    from commands.web.images import FoundImage
 
 plugin = SagePlugin()
 log = get_logger("Web")
@@ -25,6 +26,7 @@ image_keys = search_keys.child("image")
 
 SEARCH_COLOR: Final = hikari.Color(0x4285F4)
 MAX_RESULTS: Final = 10
+CANDIDATES: Final = 20
 QUERY_LIMIT: Final = 200
 
 
@@ -54,7 +56,7 @@ class SearchImage:
                 model.settings.searxng.url,
                 query,
                 language=str(ctx.locale),
-                limit=MAX_RESULTS,
+                limit=CANDIDATES,
             )
         except FETCH_ERRORS as error:
             log.warn("SearXNG image search failed: %s", error)
@@ -65,17 +67,23 @@ class SearchImage:
             await fail_after_defer(ctx, image_keys("no_results"), query=query)
             return
 
-        pages = [self.page(ctx, query, result) for result in results]
+        found = await fetch_images(model.http, results, limit=MAX_RESULTS)
+        if not found:
+            await fail_after_defer(ctx, image_keys("images_failed"), query=query)
+            return
+
+        pages = [self.page(ctx, query, item, index) for index, item in enumerate(found, 1)]
         await PaginatedResponse(pages, owner_id=ctx.user.id).send(ctx, model.miru)
 
     @staticmethod
-    def page(ctx: crescent.Context, query: str, result: ImageResult) -> hikari.Embed:
+    def page(ctx: crescent.Context, query: str, found: FoundImage, index: int) -> hikari.Embed:
+        result, image = found.result, found.image
         embed = hikari.Embed(
             title=result.title or query,
             url=result.page_url or result.image_url,
             color=SEARCH_COLOR,
         )
-        embed.set_image(result.image_url)
+        embed.set_image(hikari.Bytes(image.data, f"result-{index}.{image.extension}"))
         if result.domain:
             embed.set_footer(tr(ctx, image_keys("footer"), query=query, source=result.domain))
         return embed

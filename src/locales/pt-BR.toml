@@ -205,6 +205,7 @@ description = "Pesquise imagens na web."
 footer = "🔎 {query} · {source}"
 unavailable = "🛠️ A pesquisa não está disponível agora. Tente de novo daqui a pouco!"
 no_results = "🫥 Nenhuma imagem encontrada para **{query}**."
+images_failed = "😵 Encontrei resultados para **{query}**, mas nenhuma das imagens carregou. Tente de novo ou pesquise outra coisa."
 
 [commands.web.search.image.options.query]
 name = "busca"

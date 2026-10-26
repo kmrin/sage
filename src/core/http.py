@@ -24,7 +24,7 @@ class TooLargeError(ValueError):
 
 
 # What a failed fetch looks like: network trouble, a bad status, or a response we can't use
-FETCH_ERRORS: Final = (aiohttp.ClientError, TimeoutError, ValueError)
+FETCH_ERRORS: Final[tuple[type[Exception], ...]] = (aiohttp.ClientError, TimeoutError, ValueError)
 
 
 def create_session(version: str) -> aiohttp.ClientSession:
@@ -37,9 +37,11 @@ def create_session(version: str) -> aiohttp.ClientSession:
 
 
 async def read_capped(
-    http: aiohttp.ClientSession, url: str, *, limit: int = MAX_UPLOAD
+    http: aiohttp.ClientSession,
+    url: str,
+    *,
+    limit: int = MAX_UPLOAD,
 ) -> tuple[bytes, str]:
-    """The body and content type of `url`. Raises TooLargeError past `limit` bytes."""
     async with http.get(url) as response:
         if response.content_length is not None and response.content_length > limit:
             raise TooLargeError(f"{url} is {response.content_length} bytes")
@@ -53,6 +55,11 @@ async def read_capped(
         return bytes(data), response.content_type
 
 
-async def download(http: aiohttp.ClientSession, url: str, *, limit: int = MAX_UPLOAD) -> bytes:
+async def download(
+    http: aiohttp.ClientSession,
+    url: str,
+    *,
+    limit: int = MAX_UPLOAD,
+) -> bytes:
     data, _ = await read_capped(http, url, limit=limit)
     return data

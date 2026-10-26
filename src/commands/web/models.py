@@ -16,6 +16,7 @@ class ImageResult(BaseModel):
     image_url: str = Field(pattern=r"^https?://")
     title: str | None = None
     page_url: str | None = None
+    thumbnail_url: str | None = None
 
     @property
     def domain(self) -> str | None:
@@ -40,7 +41,12 @@ def parse_image_results(data: Any, limit: int) -> list[ImageResult]:
         seen.add(image)
         title = str(item.get("title") or "").strip()[:TITLE_LIMIT] or None
         results.append(
-            ImageResult(image_url=image, title=title, page_url=_absolute(item.get("url")))
+            ImageResult(
+                image_url=image,
+                title=title,
+                page_url=_absolute(item.get("url")),
+                thumbnail_url=_absolute(item.get("thumbnail_src")),
+            )
         )
         if len(results) == limit:
             break

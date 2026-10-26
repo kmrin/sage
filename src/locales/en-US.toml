@@ -205,6 +205,7 @@ description = "Search the web for images."
 footer = "🔎 {query} | {source}"
 unavailable = "🛠️ Search isn't available right now. Try again in a bit!"
 no_results = "🫥 No images found for **{query}**."
+images_failed = "😵 I found results for **{query}**, but none of the images would load. Try again, or search for something else."
 
 [commands.web.search.image.options.query]
 name = "query"
