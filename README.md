@@ -217,7 +217,7 @@ async def quote_message(ctx: crescent.Context, message: hikari.Message) -> None:
 - Discord allows at most 5 message commands and 5 user commands (`crescent.user_command`) per bot. Sage uses all 5 message commands (Sonic, Make it a quote, Deepfry, JPEG, Pixelate), so a new one means replacing one of those.
 
 #### Where commands are available
-Pass `context_types` to choose where a command shows up, e.g. `EVERYWHERE` from [`core/interactions.py`](./src/core/interactions.py) (`[GUILD, BOT_DM]`) for servers and DMs with Sage. Commands registered to `SAGE_DEV_GUILD_ID` only exist in that server, so DM availability can only be checked with global registration.
+Pass `context_types` to choose where a command shows up, e.g. `EVERYWHERE` from [`core/interactions.py`](./src/core/interactions.py) (`[GUILD, BOT_DM, PRIVATE_CHANNEL]`) for servers, DMs with Sage, and any other DM or group DM. Commands registered to `SAGE_DEV_GUILD_ID` only exist in that server, so DM availability can only be checked with global registration.
 
 #### Slow commands
 Discord drops interactions that aren't answered within 3 seconds. Anything that calls an outside API or renders an image starts with `await ctx.defer()`. After a public defer the reply can't become private, so to show an error privately, delete the deferred response and send the error with `ctx.interaction.execute(..., flags=hikari.MessageFlag.EPHEMERAL)`. `fail_after_defer(ctx, key, **values)` in [`core/interactions.py`](./src/core/interactions.py) does both. Run CPU-heavy work (Pillow, parsing big files) with `asyncio.to_thread()` so it doesn't block the bot. `send_rendered(ctx, render, filename)` runs a render function that way and posts the file.

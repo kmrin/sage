@@ -19,7 +19,11 @@ from commands.fun.images import QUOTE_SIZE, fit_text, render_quote, render_sonic
 from commands.fun.models import CatImage, CatRequest, DiceRoll, DogPhoto, clean_text
 from core.i18n import t
 
-EVERYWHERE = {hikari.ApplicationContextType.GUILD, hikari.ApplicationContextType.BOT_DM}
+EVERYWHERE = {
+    hikari.ApplicationContextType.GUILD,
+    hikari.ApplicationContextType.BOT_DM,
+    hikari.ApplicationContextType.PRIVATE_CHANNEL,
+}
 
 
 def _commands() -> Any:

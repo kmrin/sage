@@ -16,7 +16,11 @@ from conftest import make_ctx
 from commands.user.images import PET_FRAMES, PET_SIZE, render_petpet
 from core.i18n import t
 
-EVERYWHERE = {hikari.ApplicationContextType.GUILD, hikari.ApplicationContextType.BOT_DM}
+EVERYWHERE = {
+    hikari.ApplicationContextType.GUILD,
+    hikari.ApplicationContextType.BOT_DM,
+    hikari.ApplicationContextType.PRIVATE_CHANNEL,
+}
 
 
 def _commands() -> Any:

@@ -112,7 +112,11 @@ def test_command_is_search_image(client: crescent.Client) -> None:
     meta = _commands().SearchImage.metadata
     assert str_or_build_locale(meta.group.name) == ("search", {"pt-BR": "pesquisar"})
     assert str_or_build_locale(meta.app_command.name) == ("image", {"pt-BR": "imagem"})
-    assert set(meta.app_command.context_types) == {hikari.ApplicationContextType.GUILD, hikari.ApplicationContextType.BOT_DM}
+    assert set(meta.app_command.context_types) == {
+        hikari.ApplicationContextType.GUILD,
+        hikari.ApplicationContextType.BOT_DM,
+        hikari.ApplicationContextType.PRIVATE_CHANNEL,
+    }
 
 
 async def test_search_image_paginates_results(client: crescent.Client, monkeypatch: pytest.MonkeyPatch) -> None:

@@ -16,8 +16,11 @@ if TYPE_CHECKING:
 
 __all__ = ("EVERYWHERE", "fail_after_defer", "label", "send_rendered")
 
-# Servers and Sage's DMs
-EVERYWHERE: Final = [hikari.ApplicationContextType.GUILD, hikari.ApplicationContextType.BOT_DM]
+EVERYWHERE: Final = [
+    hikari.ApplicationContextType.GUILD,
+    hikari.ApplicationContextType.BOT_DM,
+    hikari.ApplicationContextType.PRIVATE_CHANNEL,
+]
 
 
 def label(keys: LocaleKeys) -> str:
